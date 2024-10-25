@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 import colors from "../CONST/colors";
 
@@ -21,8 +22,13 @@ const Data = () => {
   const [actualValue, setActualValue] = useState(0);
   const [dataType, setDataType] = useState(false);
   const [allData, setAllData] = useState([]);
+  const [dataToggle, setDataToggle] = useState(false);
+  const [allItems, setAllItems] = useState([]);
 
   const testNumber = useSelector((state) => state.testContext.testNmber);
+  const toggleSite = useSelector(
+    (state) => state.functionHandlerContext.siteToogle
+  );
 
   const readData = async () => {
     try {
@@ -36,27 +42,73 @@ const Data = () => {
     }
   };
 
+  const deleteItem = (index) => {
+    console.log("delete item");
+    console.log(index);
+  };
+
   useEffect(() => {
     readData();
   }, []);
 
-  const addDataForAsyncStore = async () => {
-    const newData = [
-      {
-        date: date,
-        value: actualValue,
-      },
-    ];
-    const addData = () => setAllData([...allData, newData]);
-    addData();
+  useEffect(() => {
+    if (allData) {
+      const mappedItem = allData.map((item, index) => {
+        const newDate = new Date(item.date);
+        const day = newDate.getUTCDate();
+        const month = newDate.getUTCMonth() + 1; // getUTCMonth() returns month index (0-11), so add 1
+        const year = newDate.getUTCFullYear();
+        const formattedDate = `${day}-${month}-${year}`;
 
-    try {
-      const jsonValue = JSON.stringify(allData);
-      await AsyncStorage.setItem("allData", jsonValue);
-      console.log("data saved");
-    } catch (e) {
-      console.error("Error: " + e);
+        return (
+          <View key={index}>
+            <View>
+              <Text>{item.value}</Text>
+            </View>
+            <View>
+              <Text>{formattedDate}</Text>
+            </View>
+            <TouchableOpacity onPress={() => deleteItem(index)}>
+              <Ionicons name="trash" color={"black"} size={12} />
+            </TouchableOpacity>
+          </View>
+        );
+      });
+      setAllItems(mappedItem);
     }
+  }, [allData]);
+
+  useEffect(() => {
+    readData();
+  }, [dataToggle]);
+
+  const addDataForAsyncStore = async () => {
+    const newData = {
+      date: date,
+      value: actualValue,
+    };
+    console.log(allData);
+    console.log(newData);
+    setAllData((prevData) => {
+      const updatedData =
+        prevData === null ? [newData] : [...prevData, newData];
+
+      // Save the updated data to AsyncStorage after state has been updated
+      const saveData = async () => {
+        try {
+          // await AsyncStorage.removeItem("allData");
+          const jsonValue = JSON.stringify(updatedData);
+          await AsyncStorage.setItem("allData", jsonValue);
+          console.log("Data saved:", updatedData);
+        } catch (e) {
+          console.error("Error saving data:", e);
+        }
+      };
+      saveData();
+      return updatedData; // Set the updated data as the new state
+    });
+    setActualValue(0);
+    setDataToggle(!dataToggle);
   };
 
   const onChange = (event, selectedDate) => {
@@ -133,6 +185,7 @@ const Data = () => {
       >
         <Text style={styles.buttonText}>ADD NEW VALUE</Text>
       </TouchableOpacity>
+      <View>{allItems}</View>
     </View>
   );
 };

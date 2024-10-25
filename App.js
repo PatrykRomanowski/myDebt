@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Provider } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from "@react-navigation/native";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -26,11 +28,14 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import { useEffect } from "react";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainScreen() {
+  const dispatch = useDispatch();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -69,7 +74,21 @@ function MainScreen() {
   );
 }
 
+const handleTabPress = () => {
+  console.log("XD");
+};
+
 export default function App() {
+  // const navigation = useNavigation();
+
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener("tabPress", () => {
+  //     console.log("Zakładka CHARTS została kliknięta");
+  //     handleTabPress(); // Wywołaj funkcję po kliknięciu
+  //   });
+  //   return unsubscribe;
+  // }, [navigation]);
+
   let [fontsLoaded, fontError] = useFonts({
     Inter_100Thin,
     Inter_200ExtraLight,
