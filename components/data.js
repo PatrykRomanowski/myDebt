@@ -4,7 +4,7 @@ import {
   StyleSheet,
   Text,
   View,
-  StatusBar,
+  ScrollView,
   Platform,
   Dimensions,
   TouchableOpacity,
@@ -15,6 +15,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 import colors from "../CONST/colors";
+
+const screenWidth = Dimensions.get("window").width;
 
 const Data = () => {
   const [date, setDate] = useState(new Date());
@@ -32,19 +34,49 @@ const Data = () => {
 
   const readData = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem("allData");
-      const dataArray = jsonValue != null ? JSON.parse(jsonValue) : null; // Zamiana na tablicę obiektów
-      console.log(dataArray);
-      setAllData(dataArray);
-      console.log(dataArray);
+      if (dataType === true) {
+        const jsonValue = await AsyncStorage.getItem("debitData");
+        const dataArray = jsonValue != null ? JSON.parse(jsonValue) : null; // Zamiana na tablicę obiektów
+        console.log(dataArray);
+        setAllData(dataArray);
+        console.log(dataArray);
+      } else {
+        const jsonValue = await AsyncStorage.getItem("savingData");
+        const dataArray = jsonValue != null ? JSON.parse(jsonValue) : null; // Zamiana na tablicę obiektów
+        console.log(dataArray);
+        setAllData(dataArray);
+        console.log(dataArray);
+      }
     } catch (e) {
       console.error("Error retrieving array", e);
     }
   };
 
-  const deleteItem = (index) => {
+  const deleteItem = (indexOfDelete) => {
+    const newArray = allData.filter((_, index) => index !== indexOfDelete);
+    setAllData(newArray);
+
     console.log("delete item");
-    console.log(index);
+    // console.log(index);
+    setDataToggle(!dataToggle);
+
+    const saveData = async () => {
+      try {
+        // await AsyncStorage.removeItem("allData");
+        if (dataType === true) {
+          const jsonValue = JSON.stringify(newArray);
+          await AsyncStorage.setItem("debitData", jsonValue);
+          console.log("Data saved:", newArray);
+        } else {
+          const jsonValue = JSON.stringify(newArray);
+          await AsyncStorage.setItem("savingData", jsonValue);
+          console.log("Data saved:", newArray);
+        }
+      } catch (e) {
+        console.error("Error saving data:", e);
+      }
+    };
+    saveData();
   };
 
   useEffect(() => {
@@ -61,15 +93,20 @@ const Data = () => {
         const formattedDate = `${day}-${month}-${year}`;
 
         return (
-          <View key={index}>
-            <View>
-              <Text>{item.value}</Text>
+          <View style={styles.itemContainer} key={index}>
+            <View style={styles.dataContainer}>
+              <Text style={styles.valueTextDescription}>Data list:</Text>
+              <Text style={styles.textData}>{formattedDate}</Text>
             </View>
-            <View>
-              <Text>{formattedDate}</Text>
+            <View style={styles.valueContainer}>
+              <Text style={styles.valueTextDescription}>Actual value:</Text>
+              <Text style={styles.textValue}>{item.value}</Text>
             </View>
-            <TouchableOpacity onPress={() => deleteItem(index)}>
-              <Ionicons name="trash" color={"black"} size={12} />
+            <TouchableOpacity
+              style={styles.trashIconContainer}
+              onPress={() => deleteItem(index)}
+            >
+              <Ionicons name="trash" color={"black"} size={22} />
             </TouchableOpacity>
           </View>
         );
@@ -80,7 +117,7 @@ const Data = () => {
 
   useEffect(() => {
     readData();
-  }, [dataToggle]);
+  }, [dataToggle, dataType]);
 
   const addDataForAsyncStore = async () => {
     const newData = {
@@ -97,9 +134,15 @@ const Data = () => {
       const saveData = async () => {
         try {
           // await AsyncStorage.removeItem("allData");
-          const jsonValue = JSON.stringify(updatedData);
-          await AsyncStorage.setItem("allData", jsonValue);
-          console.log("Data saved:", updatedData);
+          if (dataType === true) {
+            const jsonValue = JSON.stringify(updatedData);
+            await AsyncStorage.setItem("debitData", jsonValue);
+            console.log("Data saved:", updatedData);
+          } else {
+            const jsonValue = JSON.stringify(updatedData);
+            await AsyncStorage.setItem("savingData", jsonValue);
+            console.log("Data saved:", updatedData);
+          }
         } catch (e) {
           console.error("Error saving data:", e);
         }
@@ -123,10 +166,12 @@ const Data = () => {
 
   const onSelectHandlerDebits = () => {
     setDataType(true);
+    // setDataToggle(!dataToggle);
   };
 
   const onSelectHandlerSavings = () => {
     setDataType(false);
+    // setDataToggle(!dataToggle);
   };
 
   return (
@@ -185,7 +230,12 @@ const Data = () => {
       >
         <Text style={styles.buttonText}>ADD NEW VALUE</Text>
       </TouchableOpacity>
-      <View>{allItems}</View>
+      <ScrollView
+        style={styles.scrollViewForAllItems}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <View style={styles.allItemContainer}>{allItems}</View>
+      </ScrollView>
     </View>
   );
 };
@@ -197,7 +247,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     // backgroundColor: colors.grayLight,
-    width: "100vw",
+    width: screenWidth * 1,
   },
   text: {
     fontSize: 16,
@@ -263,6 +313,42 @@ const styles = StyleSheet.create({
   },
   buttonDataTextOff: {
     backgroundColor: "#D7C1CC",
+  },
+  allItemContainer: {
+    marginTop: 40,
+  },
+  dataContainer: {},
+  itemContainer: {
+    // width: screenWidth * 0.99,
+    justifyContent: "space-between",
+    display: "flex",
+    flexDirection: "row",
+    borderColor: "gray",
+    borderWidth: 1,
+    padding: 2,
+    marginTop: 10,
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  valueContainer: {},
+  textValue: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+  },
+  textData: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+  },
+  valueTextDescription: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+  },
+  trashIconContainer: {
+    alignSelf: "center",
+    marginRight: 10,
+  },
+  scrollViewForAllItems: {
+    width: screenWidth * 0.99,
   },
 });
 

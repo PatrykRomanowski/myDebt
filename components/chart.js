@@ -13,79 +13,41 @@ import {
   VictoryLine,
   VictoryTheme,
   VictoryLegend,
-  CartesianChart,
-  Line,
+  VictoryScatter,
+  VictoryLabel,
+  VictoryAxis,
 } from "victory-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Chart = () => {
   const [actualNumber, setActualNumber] = useState(1);
+  const [debitData, setDebitData] = useState([]);
 
-  const [data, setData] = useState([
-    { x: "sty", y: actualNumber },
-    { x: "lut", y: 3 },
-    { x: "mar", y: 5 },
-    { x: "kwi", y: 4 },
-    { x: "maj", y: 7 },
-    { x: "cze", y: 2 },
-    { x: "lip", y: 3 },
-    { x: "sie", y: 5 },
-    { x: "wrz", y: 4 },
-    { x: "paź", y: 7 },
-    { x: "lis", y: 4 },
-    { x: "gru", y: 7 },
-  ]);
+  const readDebitData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem("debitData");
+      const dataArray = jsonValue != null ? JSON.parse(jsonValue) : null; // Zamiana na tablicę obiektów
+      const formattedData = dataArray.map((item) => {
+        console.log(item); // Log each item here
+        const date = new Date(item.date);
+        return {
+          x: date.toLocaleDateString(),
+          y: parseFloat(item.value),
+        };
+      });
 
-  const [testData, setTestData] = useState([
-    { data: new Date(2024, 9, 16), value: 12000 },
-    { data: new Date(2024, 9, 17), value: 13000 },
-    { data: new Date(2024, 9, 18), value: 13200 },
-    { data: new Date(2024, 9, 19), value: 13800 },
-  ]);
-
-  const [transformData, setTransformData] = useState([]);
+      setDebitData(formattedData);
+    } catch (e) {
+      console.error("Error retrieving array", e);
+    }
+  };
 
   useEffect(() => {
-    const formattedData = testData.map((item) => ({
-      x: item.data.toLocaleDateString(),
-      y: item.value,
-    }));
-
-    setTransformData(formattedData);
+    readDebitData();
   }, []);
 
-  const [data2, setData2] = useState([
-    { x: "sty", y: actualNumber },
-    { x: "lut", y: 32 },
-    { x: "mar", y: 53 },
-    { x: "kwi", y: 44 },
-    { x: "maj", y: 75 },
-    { x: "cze", y: 26 },
-    { x: "lip", y: 37 },
-    { x: "sie", y: 51 },
-    { x: "wrz", y: 41 },
-    { x: "paź", y: 72 },
-    { x: "lis", y: 41 },
-    { x: "gru", y: 72 },
-  ]);
-
-  const onPressHandler = () => {
-    setActualNumber(actualNumber + 1);
-    console.log(actualNumber);
-    setData([
-      { x: "sty", y: actualNumber },
-      { x: "lut", y: 3 },
-      { x: "mar", y: 5 },
-      { x: "kwi", y: 4 },
-      { x: "maj", y: 7 },
-      { x: "cze", y: 2 },
-      { x: "lip", y: 3 },
-      { x: "sie", y: 5 },
-      { x: "wrz", y: 4 },
-      { x: "paź", y: 7 },
-      { x: "lis", y: 4 },
-      { x: "gru", y: 7 },
-    ]);
-  };
+  const onPressHandler = () => {};
 
   return (
     <View style={{ flex: 1 }}>
@@ -101,35 +63,34 @@ const Chart = () => {
                 { name: "Second Line", symbol: { fill: "#ccc" } },
               ]}
             />
+            <VictoryAxis
+              // domain={[0, 12]} // Ustawienie zakresu wartości osi X
+              tickCount={12} // Liczba etykiet na osi
+            />
+            <VictoryAxis
+              domain={[0, 60000]} // Ustawienie zakresu wartości osi X
+              tickCount={5} // Liczba etykiet na osi
+              dependentAxis // oznacza oś Y
+              tickFormat={[10000, 20000, 30000, 40000, 50000, 60000]}
+            />
+            <VictoryScatter
+              data={debitData}
+              style={{
+                data: { fill: "#c43a31" }, // Kolor punktów
+              }}
+            />
+
             <VictoryLine
-              data={transformData}
+              data={debitData}
               style={{
                 data: { stroke: "#c43a31" },
                 parent: { border: "1px solid #ccc" },
               }}
-            />
-            <VictoryLine
-              data={transformData}
-              style={{
-                data: { stroke: "#ccc" },
-                parent: { border: "1px solid #ccc" },
+              animate={{
+                // duration: 1000,
+                onLoad: { duration: 1000 },
               }}
-            />
-          </VictoryChart>
-          <VictoryChart theme={VictoryTheme.material}>
-            <VictoryLine
-              data={data}
-              style={{
-                data: { stroke: "#c43a31" },
-                parent: { border: "1px solid #ccc" },
-              }}
-            />
-            <VictoryLine
-              data={data2}
-              style={{
-                data: { stroke: "#ccc" },
-                parent: { border: "1px solid #ccc" },
-              }}
+              interpolation="natural"
             />
           </VictoryChart>
         </View>
