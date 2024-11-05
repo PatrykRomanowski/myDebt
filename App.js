@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Provider } from "react-redux";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
@@ -28,6 +28,9 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+
+import { functionhandlerActions } from "./storage/hendlerFunction";
+
 import { useEffect } from "react";
 
 const Stack = createNativeStackNavigator();
@@ -35,6 +38,11 @@ const Tab = createBottomTabNavigator();
 
 function MainScreen() {
   const dispatch = useDispatch();
+
+  const refreshData = () => {
+    console.log("XD");
+    dispatch(functionhandlerActions.refreshData());
+  };
 
   return (
     <Tab.Navigator
@@ -52,6 +60,15 @@ function MainScreen() {
           tabBarLabel: "CHARTS",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" color={color} size={size} />
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              onPress={() => {
+                refreshData();
+                props.onPress();
+              }}
+            />
           ),
         }}
       />

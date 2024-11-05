@@ -26,6 +26,7 @@ const Data = () => {
   const [allData, setAllData] = useState([]);
   const [dataToggle, setDataToggle] = useState(false);
   const [allItems, setAllItems] = useState([]);
+  const [debitButtonOn, setDebitButtonOn] = useState(true);
 
   const testNumber = useSelector((state) => state.testContext.testNmber);
   const toggleSite = useSelector(

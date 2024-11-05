@@ -5,10 +5,14 @@ const functionHandlerContext = createSlice({
 
   initialState: {
     siteToogle: false,
+    refreshData: false,
   },
   reducers: {
     toogleSite(state) {
       state.siteToogle = !state.siteToogle;
+    },
+    refreshData(state) {
+      state.refreshData = !state.refreshData;
     },
   },
 });
