@@ -20,6 +20,9 @@ import {
 
 import SelectionOfScopeButton from "./UI/selectionOfSCopeButton";
 
+import transformData from "../functions/transformData";
+import fillingInTheBlanksHandler from "../functions/fillingInTheBlanks";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Chart = () => {
@@ -31,6 +34,7 @@ const Chart = () => {
   const [actualLine, setActualLine] = useState([]);
   const [prevLine, setPrevLine] = useState([]);
   const [prev2YearLine, setPrec2YearLine] = useState([]);
+  const [allYearLine, setAllYearLine] = useState([]);
   const [allYearData, setAllYearData] = useState([]);
   const [toogleButtonForDebt, setToogleButtonForDebt] = useState(true);
 
@@ -88,12 +92,6 @@ const Chart = () => {
       roundedUpForMin * 5,
       roundedUpForMin * 6,
     ]);
-
-    // console.log("Maximum value:", valueMax);
-    // console.log("number length", valueMaxLength);
-    // console.log("Base", base);
-    // console.log("Max", roundedUp);
-    // console.log("Min", roundedUpForMin);
   }, [debitData]);
 
   useEffect(() => {
@@ -125,31 +123,21 @@ const Chart = () => {
       value: 0,
       counter: 0,
     }));
+    const allYearData = Array.from({ length: 10 }, () => ({
+      value: 0,
+      counter: 0,
+    }));
+    console.log(debitData);
 
-    const transformData = (data) => {
-      return data.map((item, index) => {
-        if (item.counter === 0) {
-          return { y: null, x: index }; // Handle division by zero
-        } else {
-          return { y: item.value / item.counter, x: index };
-        }
-      });
-    };
+    debitData.forEach((item) => {
+      console.log(item.x.getFullYear());
+      allYearData[actualYear - item.x.getFullYear()].value += item.y;
+      allYearData[actualYear - item.x.getFullYear()].counter += 1;
+    });
 
-    const fillingInTheBlanksHandler = (data) => {
-      if (data.length === 0) return []; // Guard clause for empty data
-
-      let lastKnownValue = data[0].y !== null ? data[0].y : 0; // Initialize with the first known value or default to 0
-
-      return data.map(({ y, x }, index) => {
-        if (y === null) {
-          return { y: lastKnownValue, x }; // Fill in the blank with last known value
-        } else {
-          lastKnownValue = y; // Update last known value
-          return { y, x }; // Return the current value
-        }
-      });
-    };
+    console.log(allYearData);
+    setAllYearData(allYearData.reverse());
+    console.log(allYearData);
 
     debitData.forEach((item) => {
       const month = item.x.getMonth();
@@ -169,105 +157,222 @@ const Chart = () => {
     setPrec2YearLine(fillingInTheBlanksHandler(transformData(prev2YearData)));
   }, [sortDebitData]);
 
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View>
-          <VictoryChart theme={VictoryTheme.material}>
-            <VictoryLegend
-              x={Dimensions.get("window").width / 4} // Center the legend
-              orientation="horizontal"
-              gutter={20}
-              data={[
+  useEffect(() => {
+    setAllYearLine(fillingInTheBlanksHandler(transformData(allYearData)));
+    console.log(allYearLine);
+  }, [allYearData]);
+
+  const renderChart = () => (
+    <VictoryChart theme={VictoryTheme.material}>
+      <VictoryLegend
+        x={Dimensions.get("window").width / (toogleButtonForDebt ? 4 : 3)}
+        orientation="horizontal"
+        gutter={20}
+        data={
+          toogleButtonForDebt
+            ? [
                 { name: actualYear - 2, symbol: { fill: "#c43a31" } },
                 { name: actualYear - 1, symbol: { fill: "#ad2" } },
                 { name: actualYear, symbol: { fill: "#2d2" } },
-              ]}
-            />
-            <VictoryAxis
-              tickValues={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]} // Represent months as numbers
-              tickCount={12} // Show 12 ticks for 12 months
-              tickFormat={(t) => {
-                const months = [
-                  "JAN",
-                  "FEB",
-                  "MAR",
-                  "APR",
-                  "MAY",
-                  "JUN",
-                  "JUL",
-                  "AUG",
-                  "SEP",
-                  "OCT",
-                  "NOV",
-                  "DEC",
-                ];
-                return months[t]; // Convert the number to the corresponding month
-              }}
-            />
-            <VictoryAxis
-              domain={[0, chartDescription[5]]} // Ustawienie zakresu wartości osi X
-              tickCount={5} // Liczba etykiet na osi
-              dependentAxis // oznacza oś Y
-              tickFormat={chartDescription}
-            />
-            <VictoryScatter
-              data={actualLine}
-              style={{
-                data: { fill: "#2d2" }, // Kolor punktów
-              }}
-            />
+              ]
+            : [{ name: "LAST 10 YEARS", symbol: { fill: "#2d2" } }]
+        }
+      />
+      <VictoryAxis
+        tickValues={Array.from(
+          { length: toogleButtonForDebt ? 12 : 10 },
+          (_, i) => i
+        )}
+        tickFormat={(t) => {
+          const labels = toogleButtonForDebt
+            ? [
+                "JAN",
+                "FEB",
+                "MAR",
+                "APR",
+                "MAY",
+                "JUN",
+                "JUL",
+                "AUG",
+                "SEP",
+                "OCT",
+                "NOV",
+                "DEC",
+              ]
+            : Array.from({ length: 10 }, (_, i) => actualYear - 9 + i);
+          return labels[t];
+        }}
+      />
+      <VictoryAxis dependentAxis tickFormat={chartDescription} />
+      <VictoryScatter
+        data={toogleButtonForDebt ? actualLine : allYearLine}
+        style={{ data: { fill: "#2d2" } }}
+      />
+      <VictoryLine
+        data={toogleButtonForDebt ? actualLine : allYearLine}
+        style={{ data: { stroke: "#2d2" } }}
+        animate={{ onLoad: { duration: 1000 } }}
+        interpolation="natural"
+      />
+    </VictoryChart>
+  );
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        {toogleButtonForDebt ? (
+          <View>
+            <VictoryChart theme={VictoryTheme.material}>
+              <VictoryLegend
+                x={Dimensions.get("window").width / 4} // Center the legend
+                orientation="horizontal"
+                gutter={20}
+                data={[
+                  { name: actualYear - 2, symbol: { fill: "#c43a31" } },
+                  { name: actualYear - 1, symbol: { fill: "#ad2" } },
+                  { name: actualYear, symbol: { fill: "#2d2" } },
+                ]}
+              />
+              <VictoryAxis
+                tickValues={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]} // Represent months as numbers
+                tickCount={12} // Show 12 ticks for 12 months
+                tickFormat={(t) => {
+                  const months = [
+                    "JAN",
+                    "FEB",
+                    "MAR",
+                    "APR",
+                    "MAY",
+                    "JUN",
+                    "JUL",
+                    "AUG",
+                    "SEP",
+                    "OCT",
+                    "NOV",
+                    "DEC",
+                  ];
+                  return months[t]; // Convert the number to the corresponding month
+                }}
+              />
+              <VictoryAxis
+                domain={[0, chartDescription[5]]} // Ustawienie zakresu wartości osi X
+                tickCount={5} // Liczba etykiet na osi
+                dependentAxis // oznacza oś Y
+                tickFormat={chartDescription}
+              />
+              <VictoryScatter
+                data={actualLine}
+                style={{
+                  data: { fill: "#2d2" }, // Kolor punktów
+                }}
+              />
 
-            <VictoryLine
-              data={actualLine}
-              style={{
-                data: { stroke: "#2d2" },
-                parent: { border: "1px solid #ccc" },
-              }}
-              animate={{
-                // duration: 1000,
-                onLoad: { duration: 1000 },
-              }}
-              interpolation="natural"
-            />
-            <VictoryScatter
-              data={prevLine}
-              style={{
-                data: { fill: "#ad2" }, // Kolor punktów
-              }}
-            />
-            <VictoryLine
-              data={prevLine}
-              style={{
-                data: { stroke: "#ad2" },
-                parent: { border: "1px solid #ccc" },
-              }}
-              animate={{
-                // duration: 1000,
-                onLoad: { duration: 1000 },
-              }}
-              interpolation="natural"
-            />
-            <VictoryScatter
-              data={prev2YearLine}
-              style={{
-                data: { fill: "#c43a31" }, // Kolor punktów
-              }}
-            />
-            <VictoryLine
-              data={prev2YearLine}
-              style={{
-                data: { stroke: "#c43a31" },
-                parent: { border: "1px solid #ccc" },
-              }}
-              animate={{
-                // duration: 1000,
-                onLoad: { duration: 1000 },
-              }}
-              interpolation="natural"
-            />
-          </VictoryChart>
-        </View>
+              <VictoryLine
+                data={actualLine}
+                style={{
+                  data: { stroke: "#2d2" },
+                  parent: { border: "1px solid #ccc" },
+                }}
+                animate={{
+                  // duration: 1000,
+                  onLoad: { duration: 1000 },
+                }}
+                interpolation="natural"
+              />
+              <VictoryScatter
+                data={prevLine}
+                style={{
+                  data: { fill: "#ad2" }, // Kolor punktów
+                }}
+              />
+              <VictoryLine
+                data={prevLine}
+                style={{
+                  data: { stroke: "#ad2" },
+                  parent: { border: "1px solid #ccc" },
+                }}
+                animate={{
+                  // duration: 1000,
+                  onLoad: { duration: 1000 },
+                }}
+                interpolation="natural"
+              />
+              <VictoryScatter
+                data={prev2YearLine}
+                style={{
+                  data: { fill: "#c43a31" }, // Kolor punktów
+                }}
+              />
+              <VictoryLine
+                data={prev2YearLine}
+                style={{
+                  data: { stroke: "#c43a31" },
+                  parent: { border: "1px solid #ccc" },
+                }}
+                animate={{
+                  // duration: 1000,
+                  onLoad: { duration: 1000 },
+                }}
+                interpolation="natural"
+              />
+            </VictoryChart>
+          </View>
+        ) : (
+          <View>
+            <VictoryChart theme={VictoryTheme.material}>
+              <VictoryLegend
+                x={Dimensions.get("window").width / 3} // Center the legend
+                orientation="horizontal"
+                gutter={20}
+                data={[{ name: "LAST 10 YEARS ", symbol: { fill: "#2d2" } }]}
+              />
+              <VictoryAxis
+                tickValues={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]} // Represent months as numbers
+                tickCount={10}
+                tickFormat={(t) => {
+                  const months = [
+                    actualYear - 9,
+                    actualYear - 8,
+                    actualYear - 7,
+                    actualYear - 6,
+                    actualYear - 5,
+                    actualYear - 4,
+                    actualYear - 3,
+                    actualYear - 2,
+                    actualYear - 1,
+                    actualYear,
+                  ];
+                  return months[t]; // Convert the number to the corresponding month
+                }}
+              />
+              <VictoryAxis
+                domain={[0, chartDescription[5]]} // Ustawienie zakresu wartości osi X
+                tickCount={5} // Liczba etykiet na osi
+                dependentAxis // oznacza oś Y
+                tickFormat={chartDescription}
+              />
+              <VictoryScatter
+                data={allYearLine}
+                style={{
+                  data: { fill: "#2d2" }, // Kolor punktów
+                }}
+              />
+
+              <VictoryLine
+                data={allYearLine}
+                style={{
+                  data: { stroke: "#2d2" },
+                  parent: { border: "1px solid #ccc" },
+                }}
+                // animate={{
+                //   duration: 1000,
+                //   onLoad: { duration: 1000 },
+                // }}
+                interpolation="natural"
+              />
+            </VictoryChart>
+          </View>
+        )}
+
         <SelectionOfScopeButton
           toogleButton={toogleButtonForDebt}
           setToogleButton={setToogleButtonForDebt}
