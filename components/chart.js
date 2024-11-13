@@ -254,7 +254,7 @@ const Chart = () => {
     });
 
     console.log(allYearDataForSaving);
-    setAllYearDataForSaving(allYearDataForSaving.reverse());
+    setAllYearDataForSaving([...allYearData].reverse());
     console.log(allYearDataForSaving);
 
     savingData.forEach((item) => {
@@ -287,18 +287,29 @@ const Chart = () => {
   }, [allYearData]);
 
   useEffect(() => {
-    setAllYearLineForSaving(
-      fillingInTheBlanksHandler(transformData(allYearDataForSaving))
+    const processedData = fillingInTheBlanksHandler(
+      transformData(allYearDataForSaving)
     );
-    console.log(allYearDataForSaving);
+    console.log("Processed Data for allYearDataForSaving:", processedData);
+    setAllYearLineForSaving(processedData);
   }, [allYearDataForSaving]);
 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {toogleButtonForDebt ? (
-          <View>
-            <VictoryChart theme={VictoryTheme.material}>
+          <View style={styles.chartContainer}>
+            <VictoryChart
+              theme={VictoryTheme.material}
+              padding={{ top: 30, bottom: 50, left: 60, right: 40 }} // Increase left padding as needed
+            >
+              <VictoryLabel
+                text="Montly Debit Chart" // Title text
+                x={225} // Center x-axis (adjust based on chart width)
+                y={100} // Position above the chart
+                textAnchor="middle"
+                style={{ fontSize: 20, fontWeight: "bold" }}
+              />
               <VictoryLegend
                 x={Dimensions.get("window").width / 4} // Center the legend
                 orientation="horizontal"
@@ -394,8 +405,18 @@ const Chart = () => {
             </VictoryChart>
           </View>
         ) : (
-          <View>
-            <VictoryChart theme={VictoryTheme.material}>
+          <View style={styles.chartContainer}>
+            <VictoryChart
+              theme={VictoryTheme.material}
+              padding={{ top: 30, bottom: 50, left: 60, right: 40 }} // Increase left padding as needed
+            >
+              <VictoryLabel
+                text="Annual Debit Chart" // Title text
+                x={225} // Center x-axis (adjust based on chart width)
+                y={100} // Position above the chart
+                textAnchor="middle"
+                style={{ fontSize: 20, fontWeight: "bold" }}
+              />
               <VictoryLegend
                 x={Dimensions.get("window").width / 3} // Center the legend
                 orientation="horizontal"
@@ -456,8 +477,18 @@ const Chart = () => {
         />
 
         {toogleButtonForSaving ? (
-          <View>
-            <VictoryChart theme={VictoryTheme.material}>
+          <View style={styles.chartContainer}>
+            <VictoryChart
+              theme={VictoryTheme.material}
+              padding={{ top: 30, bottom: 50, left: 60, right: 40 }} // Increase left padding as needed
+            >
+              <VictoryLabel
+                text="Montly Savings Chart" // Title text
+                x={225} // Center x-axis (adjust based on chart width)
+                y={100} // Position above the chart
+                textAnchor="middle"
+                style={{ fontSize: 20, fontWeight: "bold" }}
+              />
               <VictoryLegend
                 x={Dimensions.get("window").width / 4} // Center the legend
                 orientation="horizontal"
@@ -553,8 +584,18 @@ const Chart = () => {
             </VictoryChart>
           </View>
         ) : (
-          <View>
-            <VictoryChart theme={VictoryTheme.material}>
+          <View style={styles.chartContainer}>
+            <VictoryChart
+              theme={VictoryTheme.material}
+              padding={{ top: 30, bottom: 50, left: 60, right: 40 }} // Increase left padding as needed
+            >
+              <VictoryLabel
+                text="Annual Savings Chart" // Title text
+                x={225} // Center x-axis (adjust based on chart width)
+                y={100} // Position above the chart
+                textAnchor="middle"
+                style={{ fontSize: 20, fontWeight: "bold" }}
+              />
               <VictoryLegend
                 x={Dimensions.get("window").width / 3} // Center the legend
                 orientation="horizontal"
@@ -630,6 +671,9 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     padding: 20,
+  },
+  chartContainer: {
+    marginTop: 40,
   },
 });
 
