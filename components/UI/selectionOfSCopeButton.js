@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width: "100vw",
     justifyContent: "space-around",
+    marginBottom: 20,
   },
   button: {
     backgroundColor: colors.buttonOn,

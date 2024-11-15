@@ -13,6 +13,7 @@ import store from "./storage";
 
 import Chart from "./components/chart";
 import Data from "./components/data";
+import Stats from "./components/stats";
 
 import colors from "./CONST/colors";
 
@@ -69,6 +70,17 @@ function MainScreen() {
                 props.onPress();
               }}
             />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Stats"
+        component={Stats}
+        options={{
+          headerShown: false,
+          tabBarLabel: "STATS",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="wallet-outline" color={color} size={size} />
           ),
         }}
       />
