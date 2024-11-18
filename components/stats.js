@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { format } from "date-fns";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -16,7 +17,10 @@ const Stats = () => {
   const [allData, setAllData] = useState([]);
   const [toogleData, setToogleData] = useState(false);
   const [modalForDelete, setModalForDelete] = useState(false);
+  const [modalForEdit, setModalForEdit] = useState(false);
+  const [editValue, setEditValue] = useState(null);
   const [itemForDelete, setItemForDelete] = useState(null);
+  const [itemInfo, setItemInfo] = useState(null);
   const [openItemInfo, setOpenItemInfo] = useState(false);
 
   const readData = async () => {
@@ -42,6 +46,15 @@ const Stats = () => {
     }
   };
 
+  const onCloseModalInfoHandler = () => {
+    setOpenItemInfo(false);
+  };
+
+  const onCloseModalEditHandler = () => {
+    setModalForEdit(false);
+    setOpenItemInfo(true);
+  };
+
   const deleteItemAfterConfirmation = () => {
     const newArray = allData.filter((_, index) => index !== itemForDelete);
     setAllData(newArray);
@@ -60,7 +73,14 @@ const Stats = () => {
   };
 
   const deleteItem = async (indexForDelete) => {
+    setOpenItemInfo(false);
     setModalForDelete(true);
+  };
+
+  const editItemHandler = (indexForDelete) => {
+    setOpenItemInfo(false);
+    setModalForEdit(true);
+    editItem(indexForDelete);
   };
 
   const editItem = async (indexForDelete) => {
@@ -69,9 +89,11 @@ const Stats = () => {
     console.log(indexForDelete);
   };
 
-  const infoModal = async (indexForDelete) => {
+  const infoModal = async (indexForDelete, item) => {
     setItemForDelete(indexForDelete);
     setOpenItemInfo(true);
+    setItemInfo(item);
+    console.log(item);
   };
 
   const addDataForAsyncStore = async () => {
@@ -89,7 +111,8 @@ const Stats = () => {
       const jsonValue = JSON.stringify(updatedData);
 
       await AsyncStorage.setItem("statsDataForDebit", jsonValue);
-      setAllData(updatedData);
+      // setAllData(updatedData);
+      readData();
       console.log("Data saved successfully:", updatedData);
     } catch (e) {
       console.error("Error saving data:", e.message || e);
@@ -118,7 +141,7 @@ const Stats = () => {
       </TouchableOpacity>
       {allData.length > 0 ? (
         allData.map((item, index) => (
-          <TouchableOpacity onPress={() => infoModal(index)}>
+          <TouchableOpacity onPress={() => infoModal(index, item)}>
             <View style={styles.containerForItem} key={index}>
               <View>
                 <Text style={styles.nameText}>{item.name}</Text>
@@ -128,14 +151,6 @@ const Stats = () => {
                   {/* <Text>{item.data}</Text> */}
                   <Text style={styles.valueText}>{item.value} PLN</Text>
                 </View>
-                {/* <View>
-                <TouchableOpacity onPress={() => deleteItem(index)}>
-                <Ionicons name="create-outline" color={"black"} size={22} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => deleteItem(index)}>
-                <Ionicons name="trash" color={"black"} size={22} />
-                </TouchableOpacity>
-                </View> */}
               </View>
             </View>
           </TouchableOpacity>
@@ -149,7 +164,75 @@ const Stats = () => {
         visible={openItemInfo}
         onRequestClose={() => setOpenItemInfo(false)}
       >
-        <Text>XD</Text>
+        <View style={styles.modalBackground}>
+          <TouchableOpacity
+            style={styles.buttonCloseContainer}
+            onPress={onCloseModalInfoHandler}
+          >
+            <Ionicons
+              style={styles.buttonClose}
+              name="close-circle-outline"
+              color={"white"}
+              size={28}
+            ></Ionicons>
+          </TouchableOpacity>
+          {itemInfo === null ? (
+            <View></View>
+          ) : (
+            <View style={styles.dataContainer}>
+              <View style={styles.dataInfoContainer}>
+                <Text style={styles.textInfo}>{itemInfo.name}</Text>
+              </View>
+              <View style={styles.dataInfoContainer}>
+                <Text style={styles.textInfoDescription}>ACTUAL VALUE</Text>
+                <Text style={styles.textInfo}>{itemInfo.value} PLN</Text>
+              </View>
+              <View style={styles.dataInfoContainer}>
+                <Text style={styles.textInfoDescription}>DATE OF TAKING</Text>
+                <Text style={styles.textInfo}>
+                  {format(itemInfo.data, "yyyy-MM-dd")}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          <View style={styles.iconContainer}>
+            <TouchableOpacity
+              style={styles.icon}
+              onPress={() => editItemHandler(itemForDelete)}
+            >
+              <Ionicons name="create-outline" color={"white"} size={22} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.icon}
+              onPress={() => deleteItem(itemForDelete)}
+            >
+              <Ionicons name="trash" color={"white"} size={22} />
+            </TouchableOpacity>
+          </View>
+          <Text>XD</Text>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalForEdit}
+        onRequestClose={() => setModalForEdit(false)}
+      >
+        <View style={styles.modalBackground}>
+          <TouchableOpacity
+            style={styles.buttonCloseContainer}
+            onPress={onCloseModalEditHandler}
+          >
+            <Ionicons
+              style={styles.buttonClose}
+              name="close-circle-outline"
+              color={"white"}
+              size={28}
+            ></Ionicons>
+          </TouchableOpacity>
+        </View>
       </Modal>
 
       <Modal
@@ -158,22 +241,29 @@ const Stats = () => {
         visible={modalForDelete}
         onRequestClose={() => setModalForDelete(false)}
       >
-        <View style={styles.modalBackground}>
-          <Text>CZY NAPENO CHCESZ USUNĄĆ WARTOŚĆ?</Text>
-          <TouchableOpacity
-            onPress={() => {
-              deleteItemAfterConfirmation();
-            }}
-          >
-            <Text>TAK</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setModalForDelete(false);
-            }}
-          >
-            <Text>NIE</Text>
-          </TouchableOpacity>
+        <View style={styles.modalBackgroundForDelete}>
+          <Text style={styles.buttonForDeleteText}>
+            CZY NAPENO CHCESZ USUNĄĆ WARTOŚĆ?
+          </Text>
+          <View style={styles.butoonContainerForDelete}>
+            <TouchableOpacity
+              style={styles.buttonForDelete}
+              onPress={() => {
+                deleteItemAfterConfirmation();
+              }}
+            >
+              <Text style={styles.buttonForDeleteText}>TAK</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.buttonForDelete}
+              onPress={() => {
+                setModalForDelete(false);
+                setOpenItemInfo(true);
+              }}
+            >
+              <Text style={styles.buttonForDeleteText}>NIE</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -187,6 +277,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 10,
   },
+  icon: { width: screenWidth * 0.5, alignItems: "center" },
   containerForItem: {
     width: screenWidth * 0.95,
     flexDirection: "row",
@@ -197,12 +288,49 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
   },
+  buttonCloseContainer: {
+    width: screenWidth,
+  },
+  buttonClose: {
+    alignSelf: "flex-end",
+    padding: 10,
+  },
+  buttonForDelete: {
+    width: screenWidth * 0.4,
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    padding: 10,
+    margin: 10,
+  },
+  buttonForDeleteText: {
+    color: "white",
+    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+  },
+  butoonContainerForDelete: {
+    flexDirection: "row",
+    marginTop: 20,
+  },
+  iconContainer: {
+    flexDirection: "row",
+  },
   modalBackground: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
   },
+  dataInfoContainer: {
+    marginTop: 40,
+  },
+
+  modalBackgroundForDelete: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+  },
+
   containerForValueTrashEdit: {
     flexDirection: "row",
     justifyContent: "center",
@@ -218,6 +346,16 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     marginLeft: 20,
     textTransform: "uppercase",
+  },
+  textInfo: {
+    color: "white",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 20,
+  },
+  textInfoDescription: {
+    color: "white",
+    fontFamily: "Inter_500Medium",
+    fontSize: 9,
   },
   textDescription: {
     fontFamily: "Inter_600SemiBold",
