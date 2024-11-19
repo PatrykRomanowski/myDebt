@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   Modal,
+  TextInput,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -22,6 +23,7 @@ const Stats = () => {
   const [itemForDelete, setItemForDelete] = useState(null);
   const [itemInfo, setItemInfo] = useState(null);
   const [openItemInfo, setOpenItemInfo] = useState(false);
+  const [inputValue, setInputValue] = useState(null);
 
   const readData = async () => {
     try {
@@ -232,6 +234,28 @@ const Stats = () => {
               size={28}
             ></Ionicons>
           </TouchableOpacity>
+          <View style={styles.inputEditContainer}>
+            <Text
+              style={[
+                styles.textInfo,
+                { textAlign: "center", marginBottom: 30 },
+              ]}
+            >
+              ENTER NEW VALUE
+            </Text>
+            <TextInput
+              style={[styles.input, { color: "white" }]}
+              placeholder={inputValue === "" ? "Enter a number" : inputValue}
+              placeholderTextColor="white"
+              keyboardType="numeric"
+              value={inputValue}
+              textAlign="center"
+              onChangeText={(value) => setInputValue(value)}
+            />
+            <TouchableOpacity style={styles.buttonEditConfirm}>
+              <Text style={styles.buttonConfirmText}>CONFIRM</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
@@ -291,6 +315,32 @@ const styles = StyleSheet.create({
   buttonCloseContainer: {
     width: screenWidth,
   },
+  buttonEditConfirm: {
+    width: screenWidth * 0.98,
+    backgroundColor: "black",
+    marginBottom: screenWidth * 0.3,
+    marginTop: 50,
+  },
+  buttonConfirmText: {
+    textAlign: "center",
+    color: "white",
+    fontFamily: "Inter_500Medium",
+    fontSize: 15,
+    padding: 20,
+  },
+  inputEditContainer: {
+    width: screenWidth,
+    alignContent: "center",
+    justifyContent: "center",
+  },
+  input: {
+    height: 40,
+    borderColor: "white",
+    borderWidth: 2,
+    // width: "80%",
+    marginHorizontal: 10,
+    borderRadius: 15,
+  },
   buttonClose: {
     alignSelf: "flex-end",
     padding: 10,
@@ -337,6 +387,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     margin: 5,
   },
+
   valueText: {
     fontFamily: "Inter_500Medium",
     fontSize: 18,
